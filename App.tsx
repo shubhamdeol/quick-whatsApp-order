@@ -1,11 +1,12 @@
-import React from 'react';
-import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
-import { CreateList } from './components'
+import React from "react";
+import { StyleSheet, SafeAreaView } from "react-native";
+
+import { CreateList } from "./components";
 
 export default function App() {
   return (
     <SafeAreaView style={styles.container}>
-      <CreateList/>
+      <CreateList />
     </SafeAreaView>
   );
 }
@@ -13,6 +14,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
 });
