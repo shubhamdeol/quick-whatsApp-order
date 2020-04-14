@@ -1,5 +1,3 @@
-import CreateList from './CreateList';
+import AddRemoveButtom from "./AddRemoveButton";
 
-export {
-    CreateList
-};
+export { AddRemoveButtom };
