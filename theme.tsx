@@ -25,9 +25,9 @@ export const theme = {
     xxlarge: 32,
   },
   colors: {
-    primary: "#424242",
-    secondary: "#f9a825",
-    tertiary: "#e53935",
+    primary: "#b4d468",
+    secondary: "#ff7d97",
+    tertiary: "#e77dff",
     disabled: "rgba(131, 131, 131, 0.48)",
     gray_primary: "#696969",
     white_primary: "#EBEBEB",

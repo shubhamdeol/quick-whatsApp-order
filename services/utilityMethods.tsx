@@ -1,18 +1,17 @@
-type Item = {
+interface IItem {
   name: string;
   quantity: number;
-};
+}
 
 type OrderObject = {
   name: string;
-  quantity: string;
   address: string;
   note: string;
-  items: Item[];
+  items: IItem[];
 };
 
-export const generateOrderDetailString = (orderInfo: OrderObject) => {
-  const details = orderInfo.items.map((item: Item) => {
+export const generateOrderDetailString = (orderInfo: OrderObject): string => {
+  const details = orderInfo.items.map((item: IItem) => {
     const productInfoString = `- \`\`\`${
       item.name
     }\`\`\`\n *x* *${item.quantity.toString()}*\n\n`;

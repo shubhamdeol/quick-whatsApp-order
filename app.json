@@ -23,6 +23,10 @@
     ],
     "ios": {
       "supportsTablet": true
+    },
+    "android": {
+      "package": "com.order.place",
+      "versionCode": 1
     }
   }
 }

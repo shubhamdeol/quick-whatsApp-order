@@ -17,14 +17,20 @@ const AddRemoveButton: React.FC<Props> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={onMinusPress}>
-        <Text>-</Text>
+      <TouchableOpacity
+        style={[styles.button, styles.minus]}
+        onPress={onMinusPress}
+      >
+        <Text style={styles.buttonText}>-</Text>
       </TouchableOpacity>
       <View style={[styles.quantity]}>
-        <Text>{quantity}</Text>
+        <Text style={styles.quantityText}>{quantity}</Text>
       </View>
-      <TouchableOpacity style={styles.button} onPress={onPlusPress}>
-        <Text>+</Text>
+      <TouchableOpacity
+        style={[styles.button, styles.plus]}
+        onPress={onPlusPress}
+      >
+        <Text style={styles.buttonText}>+</Text>
       </TouchableOpacity>
     </View>
   );
@@ -40,17 +46,33 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   button: {
-    height: 36,
-    width: 36,
+    height: 32,
+    width: 32,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: theme.colors.white_primary,
-    borderRadius: 18,
+    borderRadius: 16,
+  },
+  minus: {
+    backgroundColor: theme.colors.secondary,
+  },
+  plus: {
+    backgroundColor: theme.colors.tertiary,
   },
   quantity: {
     height: 36,
-    width: 36,
+    width: 25,
     alignItems: "center",
     justifyContent: "center",
+    bottom: 2,
+  },
+  buttonText: {
+    color: theme.colors.white_primary,
+    fontWeight: "bold",
+    fontSize: theme.fontSize.medium,
+  },
+  quantityText: {
+    color: theme.colors.black_primary,
+    fontWeight: "bold",
+    fontSize: theme.fontSize.medium,
   },
 });

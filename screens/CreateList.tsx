@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { StackNavigationProp } from "@react-navigation/stack";
+import React, { useState, useRef, useContext, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -6,13 +7,16 @@ import {
   Linking,
   TouchableOpacity,
   ScrollView,
+  AsyncStorage,
 } from "react-native";
 import { v1 as uuidv1 } from "uuid";
 
+import { MainStackParamsList } from "../App";
 import { Text, TextInput, Modal } from "../common";
 import { AddRemoveButtom } from "../components";
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from "../constants/layout";
 import { generateOrderDetailString } from "../services/utilityMethods";
+import { store } from "../store";
 import { theme } from "../theme";
 
 interface IItem {
@@ -21,10 +25,28 @@ interface IItem {
   quantity: number;
 }
 
-export default function CreateList({ navigation }) {
+type OrderData = {
+  name: string;
+  address: string;
+  note: string;
+  createdAt: Date;
+  items: IItem[];
+};
+
+type ProfileScreenNavigationProp = StackNavigationProp<
+  MainStackParamsList,
+  "CreateList"
+>;
+
+type Props = {
+  navigation: ProfileScreenNavigationProp;
+};
+
+export default function CreateList({ navigation, route }: Props) {
   const [modalVisibility, setModalVisibility] = useState(false);
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
+  const flatListRef = useRef<FlatList<IItem>>(null);
   const [address, setAddress] = useState("");
   const [items, setItems] = useState<IItem[]>([
     {
@@ -33,6 +55,40 @@ export default function CreateList({ navigation }) {
       quantity: 0,
     },
   ]);
+  const globalState = useContext(store);
+  const { state, dispatch } = globalState;
+
+  useEffect(() => {
+    if (state.repeatOrderData) {
+      onRepeatOrder(state.repeatOrderData);
+      dispatch({
+        type: "setRepeatOrder",
+        order: null,
+      });
+    }
+  }, [state.repeatOrderData]);
+
+  function onRepeatOrder(order) {
+    if (order) {
+      setItems([
+        ...order.items,
+        {
+          id: uuidv1(),
+          name: "",
+          quantity: 0,
+        },
+      ]);
+      if (order.address) {
+        setAddress(order.address);
+      }
+      if (order.note) {
+        setNote(order.note);
+      }
+      if (order.name) {
+        setName(order.name);
+      }
+    }
+  }
 
   function handleAddItem(itemId: string, itemValue: string) {
     const updatedItems = items.reduce((acc: any, cv) => {
@@ -91,6 +147,13 @@ export default function CreateList({ navigation }) {
     setItems(updatedItems);
   }
 
+  async function storeOrdersToAsync(orderData: OrderData) {
+    const orders = (await AsyncStorage.getItem("orders")) || "[]";
+    const ordersData = JSON.parse(orders);
+    const updatedOrders = [orderData, ...ordersData];
+    await AsyncStorage.setItem("orders", JSON.stringify(updatedOrders));
+  }
+
   function placeOrder() {
     const updatedItems = items.filter((item) => item.name);
     const orderData = {
@@ -98,14 +161,16 @@ export default function CreateList({ navigation }) {
       name,
       note,
       address,
+      createdAt: new Date(),
+      orderId: uuidv1(),
     };
     const orderString = generateOrderDetailString(orderData);
-
     const encodedOrderDetails = encodeURIComponent(orderString);
     const url = `whatsapp://send?text=${encodedOrderDetails}`;
     Linking.canOpenURL(url)
       .then((canOpen: boolean) => {
         if (canOpen) {
+          storeOrdersToAsync(orderData);
           Linking.openURL(url);
           navigation.reset({
             index: 0,
@@ -118,7 +183,6 @@ export default function CreateList({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.createListText}>Make list of items you need</Text>
       {!!items[0].name && (
         <Modal
           transparent
@@ -161,10 +225,14 @@ export default function CreateList({ navigation }) {
       )}
       <FlatList
         data={items}
+        ref={flatListRef}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.contentContainerStyle}
+        ListHeaderComponent={() => (
+          <Text style={styles.createListText}>Make list of items you need</Text>
+        )}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View>
             <Text style={styles.dot}>.</Text>
             <TextInput
@@ -172,6 +240,14 @@ export default function CreateList({ navigation }) {
               value={item.name}
               placeholder="Add item name"
               onChangeText={(value) => handleAddItem(item.id, value)}
+              onFocus={() => {
+                // eslint-disable-next-line no-unused-expressions
+                flatListRef.current?.scrollToIndex({
+                  index,
+                  animated: true,
+                  viewPosition: 0.7,
+                });
+              }}
             />
             {item.quantity > 0 && (
               <AddRemoveButtom
@@ -188,7 +264,7 @@ export default function CreateList({ navigation }) {
           styles.nextButton,
           {
             backgroundColor: items[0].name
-              ? theme.colors.secondary
+              ? theme.colors.primary
               : theme.colors.disabled,
           },
         ]}
@@ -210,39 +286,39 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
   },
   createListText: {
-    color: theme.colors.black_primary,
-    fontWeight: "500",
-    marginTop: theme.space.xxlarge,
+    color: theme.colors.gray_primary,
+    fontWeight: "600",
+    marginTop: theme.space.xxxlarge,
   },
   itemInput: {
-    height: 40,
+    height: 44,
     width: SCREEN_WIDTH * 0.95,
-    marginVertical: theme.space.medium,
-    paddingHorizontal: theme.space.xxxlarge,
+    marginVertical: theme.space.xsmall,
     paddingRight: 130,
+    paddingLeft: 30,
     alignSelf: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.8,
     shadowRadius: 10,
     borderColor: theme.colors.gray_primary,
-    borderWidth: 1,
     overflow: "hidden",
+    elevation: 1,
   },
   dot: {
     position: "absolute",
-    top: 3,
+    bottom: 16,
     color: theme.colors.gray_primary,
     left: 16,
-    fontWeight: "900",
+    fontWeight: "bold",
     fontSize: theme.fontSize.xxlarge,
   },
   contentContainerStyle: {
     paddingBottom: SCREEN_HEIGHT * 0.33,
   },
   nextButton: {
-    backgroundColor: theme.colors.secondary,
-    height: 50,
+    backgroundColor: theme.colors.primary,
+    height: 44,
     justifyContent: "center",
     alignItems: "center",
     margin: 15,
@@ -274,18 +350,19 @@ const styles = StyleSheet.create({
   nameInput: {
     height: 50,
     marginHorizontal: SCREEN_WIDTH * 0.04,
-    borderBottomWidth: 1,
-    borderColor: theme.colors.gray_primary,
+    borderBottomWidth: 2,
+    borderColor: theme.colors.white_primary,
     fontSize: theme.fontSize.large,
   },
   noteInput: {
     height: 80,
     marginHorizontal: SCREEN_WIDTH * 0.04,
-    borderColor: theme.colors.gray_primary,
+    borderColor: theme.colors.white_primary,
     fontSize: theme.fontSize.small,
     color: theme.colors.gray_primary,
-    borderWidth: 1,
+    borderWidth: 2,
     marginTop: 12,
     padding: 12,
+    textAlignVertical: "top",
   },
 });

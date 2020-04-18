@@ -1,4 +1,4 @@
 import CreateList from "./CreateList";
-import PlaceOrder from "./PlaceOrder";
+import PastOrders from "./PastOrders";
 
-export { CreateList, PlaceOrder };
+export { CreateList, PastOrders };
