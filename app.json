@@ -26,7 +26,12 @@
     },
     "android": {
       "package": "com.order.place",
-      "versionCode": 1
+      "versionCode": 1,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBt3y1UmH-2XxIG2q7chtqQbHxVshaOBxk"
+        }
+      }
     }
   }
 }

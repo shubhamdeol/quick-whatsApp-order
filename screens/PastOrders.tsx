@@ -8,6 +8,7 @@ import {
   AsyncStorage,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from "../constants/layout";
@@ -44,6 +45,28 @@ const PastOrders = ({ navigation }) => {
     navigation.navigate("CreateList");
   }
 
+  function handleDelete(order) {
+    function deleteOrder() {
+      const remainingOrders = ordersData.filter(
+        (each: any) => each.orderId !== order.orderId
+      );
+      setOrdersData(remainingOrders);
+      AsyncStorage.setItem("orders", JSON.stringify(remainingOrders));
+    }
+    Alert.alert(
+      "Delete Order!",
+      "Are you sure about deleting this order ?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        { text: "OK", onPress: () => deleteOrder() },
+      ],
+      { cancelable: false }
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -76,7 +99,10 @@ const PastOrders = ({ navigation }) => {
                   {shouldShowDate ? `${orderTime}, ${orderDate}` : orderTime}
                 </Text>
                 <View style={styles.itemsWrap}>
-                  <TouchableOpacity style={styles.button}>
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => handleDelete(item)}
+                  >
                     <Text style={styles.buttonText}>Delete</Text>
                   </TouchableOpacity>
                   <TouchableOpacity

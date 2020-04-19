@@ -15,6 +15,13 @@ const StateProvider = ({ children }) => {
         };
       }
 
+      case "setPickedLocation": {
+        return {
+          ...state,
+          pickedAddress: action.address,
+        };
+      }
+
       default:
         throw new Error();
     }

@@ -1,3 +1,4 @@
+import { Entypo } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { useState, useRef, useContext, useEffect } from "react";
 import {
@@ -15,7 +16,10 @@ import { MainStackParamsList } from "../App";
 import { Text, TextInput, Modal } from "../common";
 import { AddRemoveButtom } from "../components";
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from "../constants/layout";
-import { generateOrderDetailString } from "../services/utilityMethods";
+import {
+  generateOrderDetailString,
+  getSingleAddressFromLocation,
+} from "../services/utilityMethods";
 import { store } from "../store";
 import { theme } from "../theme";
 
@@ -48,6 +52,7 @@ export default function CreateList({ navigation, route }: Props) {
   const [note, setNote] = useState("");
   const flatListRef = useRef<FlatList<IItem>>(null);
   const [address, setAddress] = useState("");
+  const [coords, setCoords] = useState(null);
   const [items, setItems] = useState<IItem[]>([
     {
       id: uuidv1(),
@@ -66,7 +71,19 @@ export default function CreateList({ navigation, route }: Props) {
         order: null,
       });
     }
-  }, [state.repeatOrderData]);
+    if (state.pickedAddress) {
+      const addressString = getSingleAddressFromLocation(
+        state.pickedAddress.addressText
+      );
+      setAddress(addressString);
+      setCoords(state.pickedAddress.coords);
+      setModalVisibility(true);
+      dispatch({
+        type: "setPickedLocation",
+        pickedAddress: {},
+      });
+    }
+  }, [state.repeatOrderData, state.pickedAddress]);
 
   function onRepeatOrder(order) {
     if (order) {
@@ -163,6 +180,7 @@ export default function CreateList({ navigation, route }: Props) {
       address,
       createdAt: new Date(),
       orderId: uuidv1(),
+      addressCoords: coords,
     };
     const orderString = generateOrderDetailString(orderData);
     const encodedOrderDetails = encodeURIComponent(orderString);
@@ -189,7 +207,7 @@ export default function CreateList({ navigation, route }: Props) {
           visible={modalVisibility}
           dismiss={() => setModalVisibility(false)}
         >
-          <ScrollView>
+          <ScrollView keyboardShouldPersistTaps="always">
             <View style={styles.modalContainer}>
               <Text style={styles.moreDetails}>More Details (optional)</Text>
               <Text style={styles.name}>Name</Text>
@@ -197,15 +215,27 @@ export default function CreateList({ navigation, route }: Props) {
                 style={styles.nameInput}
                 value={name}
                 onChangeText={(value) => setName(value)}
+                autoFocus
               />
-              <View>
+              <View style={styles.wrapAddress}>
                 <Text style={styles.name}>Address</Text>
+                <TouchableOpacity
+                  style={styles.addressMap}
+                  onPress={() => {
+                    setModalVisibility(false);
+                    navigation.navigate("MapLocation");
+                  }}
+                >
+                  <Entypo name="location-pin" size={32} color="green" />
+                </TouchableOpacity>
               </View>
-              <TextInput
-                style={styles.nameInput}
-                value={address}
-                onChangeText={(value) => setAddress(value)}
-              />
+              <View>
+                <TextInput
+                  style={[styles.nameInput, { fontSize: theme.fontSize.small }]}
+                  value={address}
+                  onChangeText={(value) => setAddress(value)}
+                />
+              </View>
               <Text style={styles.name}>Note</Text>
 
               <TextInput
@@ -229,7 +259,7 @@ export default function CreateList({ navigation, route }: Props) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.contentContainerStyle}
         ListHeaderComponent={() => (
-          <Text style={styles.createListText}>Make list of items you need</Text>
+          <Text style={styles.createListText}>Make items list</Text>
         )}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
@@ -287,7 +317,8 @@ const styles = StyleSheet.create({
   },
   createListText: {
     color: theme.colors.gray_primary,
-    fontWeight: "600",
+    fontWeight: "bold",
+    fontSize: theme.fontSize.medium,
     marginTop: theme.space.xxxlarge,
   },
   itemInput: {
@@ -364,5 +395,17 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 12,
     textAlignVertical: "top",
+  },
+  wrapAddress: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  addressMap: {
+    padding: 4,
+    top: 4,
+    right: 14,
+    backgroundColor: theme.colors.white_primary,
+    borderRadius: 20,
+    elevation: 2,
   },
 });
